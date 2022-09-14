@@ -1,0 +1,61 @@
+﻿@page "/"
+@using GaleriaOwocowBlazor.Shared
+@inject HttpClient Http
+
+<PageTitle>Galeria Owoców</PageTitle>
+
+@if (fruits == null)
+{
+    <p>
+        <em>Ładowanie...</em>
+    </p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nazwa</th>
+            <th>Kolor</th>
+            <th>Opis</th>
+            <th>Zdjęcie</th>
+            <th>Akcje</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var fruit in fruits)
+        {
+            <tr>
+                <td>@fruit.Id</td>
+                <td>@fruit.Name</td>
+                <td>@fruit.Color</td>
+                <td>@fruit.Description</td>
+                <td>
+                    <img src="@("upload/" + fruit.Image)" alt="@fruit.Name"/>
+                </td>
+                <td>
+                    <a href="view/@fruit.Id" class="btn btn-success">Szczegóły</a>
+                    <a href="" class="btn btn-primary">Edytuj</a>
+                    <button type="button" class="btn btn-danger" @onclick="async () => await Remove(fruit.Id)">Usuń</button>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private Fruit[]? fruits;
+
+    protected override async Task OnInitializedAsync()
+    {
+        fruits = await Http.GetFromJsonAsync<Fruit[]>("api/fruit");
+    }
+
+    private async Task Remove(int id)
+    {
+        await Http.DeleteAsync($"api/fruit/{id}");
+        fruits = await Http.GetFromJsonAsync<Fruit[]>("api/fruit");
+    }
+}

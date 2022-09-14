@@ -1,0 +1,67 @@
+﻿@page "/new"
+@using GaleriaOwocowBlazor.Shared
+@using System.Net.Http.Headers
+@using GaleriaOwocowBlazor.Client.Models
+@using Microsoft.AspNetCore.Components
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject ILogger<New> Logger
+
+<PageTitle>Nowy owoc</PageTitle>
+
+
+<EditForm Model="@_fruitCreate" OnValidSubmit="@HandleValidSubmit">
+    <DataAnnotationsValidator/>
+    <ValidationSummary/>
+    
+    <div>
+        <label for="name">Nazwa</label>
+        <InputText id="name" @bind-Value="_fruitCreate.Name"/>
+    </div>
+    <div>
+        <label for="color">Kolor</label>
+        <InputText id="color" @bind-Value="_fruitCreate.Color"/>
+    </div>
+    <div>
+        <label for="description">Opis</label>
+        <InputTextArea id="description" @bind-Value="_fruitCreate.Description"/>
+    </div>
+    <div>
+        <label for="zdjecie">Zdjęcie</label>
+        <InputFile id="zdjecie" @bind-Value="_fruitCreate.ImageFile" OnChange="@LoadFile" required />
+    </div>
+
+    <button type="submit">Zapisz</button>
+</EditForm>
+
+@code {
+    private FruitCreateFormModel _fruitCreate = new();
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            using var content = new MultipartFormDataContent();
+            _fruitCreate.FillMultipartContent(content);
+
+            var imageContent = new StreamContent(_fruitCreate.ImageFile.OpenReadStream());
+            imageContent.Headers.ContentType = new MediaTypeHeaderValue(_fruitCreate.ImageFile.ContentType);
+            
+            content.Add(imageContent, "\"file\"", _fruitCreate.ImageFile.Name);
+
+            var response = await Http.PostAsync("/api/fruit", content);
+            
+            Logger.LogInformation($"Result: {response.IsSuccessStatusCode}");
+            NavManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogInformation($"Błąd wysyłania: {ex.Message}");
+        }
+    }
+
+    private void LoadFile(InputFileChangeEventArgs e)
+    {
+        _fruitCreate.ImageFile = e.File;
+    }
+}

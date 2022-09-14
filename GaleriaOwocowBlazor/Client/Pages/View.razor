@@ -1,0 +1,66 @@
+﻿@page "/view/{Id:int}"
+@using GaleriaOwocowBlazor.Shared
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<PageTitle>Galeria Owoców</PageTitle>
+
+@if (_fruit == null)
+{
+    <p>
+        <em>Ładowanie...</em>
+    </p>
+}
+else
+{
+    <table class="table table-striped align-middle">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Nazwa</th>
+            <th>Kolor</th>
+            <th>Opis</th>
+            <th>Zdjęcie</th>
+            <th>Akcje</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td>@_fruit.Id</td>
+            <td>@_fruit.Name</td>
+            <td>@_fruit.Color</td>
+            <td>@_fruit.Description</td>
+            <td>
+                <img src="@("upload/" + _fruit.Image)" alt="@_fruit.Name"/>
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger" @onclick="async () => await Remove(_fruit.Id)">Usuń</button>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Fruit? _fruit;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Id.HasValue)
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        _fruit = await Http.GetFromJsonAsync<Fruit>($"api/fruit/{Id.Value}");
+    }
+
+    private async Task Remove(int id)
+    {
+        await Http.DeleteAsync($"api/fruit/{id}");
+        NavManager.NavigateTo("/");
+    }
+}
